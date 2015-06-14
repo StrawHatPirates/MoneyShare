@@ -10,6 +10,8 @@ public interface IDataAccess {
 
     ArrayList<Member> addMember(ArrayList<Member> members);
 
+    Member findMember(String email);
+
     ArrayList<Member> getMember();
 
     Member getMember(long memberId);

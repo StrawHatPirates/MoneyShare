@@ -23,18 +23,14 @@ import java.util.Locale;
 public class DBAccess implements IDataAccess {
     private final String LOG_TAG = "DBAccess";
     private Context context;
-    private MemberDbHelper memberHelper;
-    private ExpenseDbHelper expenseHelper;
-    private ExpenseMemberDbHelper expenseMemberHelper;
+    private MoneyShareDbHelper dbHelper;
 
     private String dateFormat = "yyyy-MM-dd HH:mm:ss";
     private final SimpleDateFormat isoSdf = new SimpleDateFormat(dateFormat, Locale.ENGLISH);
 
     public DBAccess(Context context) {
         this.context = context;
-        memberHelper = new MemberDbHelper(context);
-        expenseHelper = new ExpenseDbHelper(context);
-        expenseMemberHelper = new ExpenseMemberDbHelper(context);
+        dbHelper = new MoneyShareDbHelper(context);
     }
 
     @Override
@@ -42,7 +38,7 @@ public class DBAccess implements IDataAccess {
 
         //Writable DB Helper
 
-        try (SQLiteDatabase db = memberHelper.getWritableDatabase()) {
+        try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
 
             // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
@@ -64,7 +60,7 @@ public class DBAccess implements IDataAccess {
     @Override
     public ArrayList<Member> addMember(ArrayList<Member> members) {
         //Writable DB Helper
-        SQLiteDatabase db = memberHelper.getWritableDatabase();
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         try {
 
@@ -96,11 +92,53 @@ public class DBAccess implements IDataAccess {
     }
 
     @Override
+    public Member findMember(String email) {
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
+            String[] projection = {
+                    MemberContract.MemberEntry._ID,
+                    MemberContract.MemberEntry.COLUMN_NAME_Name,
+                    MemberContract.MemberEntry.COLUMN_NAME_Email,
+                    MemberContract.MemberEntry.COLUMN_NAME_Phone,
+            };
+
+            String sortOrder = MemberContract.MemberEntry.COLUMN_NAME_Name + " DESC";
+
+            String selection = MemberContract.MemberEntry.COLUMN_NAME_Email + " =?";
+            String[] selectionArgs = {String.valueOf(email)};
+
+            Cursor c = db.query(MemberContract.MemberEntry.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    sortOrder);
+
+            if (c.moveToFirst()) {
+                Member member;
+
+
+                long Id = c.getLong(c.getColumnIndexOrThrow(MemberContract.MemberEntry._ID));
+                String Name = c.getString(c.getColumnIndexOrThrow(MemberContract.MemberEntry.COLUMN_NAME_Name));
+                String Email = c.getString(c.getColumnIndexOrThrow(MemberContract.MemberEntry.COLUMN_NAME_Email));
+                String Phone = c.getString(c.getColumnIndexOrThrow(MemberContract.MemberEntry.COLUMN_NAME_Phone));
+
+                member = new Member(Id, Name, Email, Phone);
+
+
+                return member;
+            }
+
+            return null;
+        }
+    }
+
+    @Override
     public ArrayList<Member> getMember() {
 
         // Readable DB Helper
 
-        try (SQLiteDatabase db = memberHelper.getReadableDatabase()) {
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
             String[] projection = {
                     MemberContract.MemberEntry._ID,
                     MemberContract.MemberEntry.COLUMN_NAME_Name,
@@ -144,7 +182,7 @@ public class DBAccess implements IDataAccess {
     @Override
     public Member getMember(long memberId) {
 
-        try (SQLiteDatabase db = memberHelper.getReadableDatabase()) {
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
             String[] projection = {
                     MemberContract.MemberEntry._ID,
                     MemberContract.MemberEntry.COLUMN_NAME_Name,
@@ -186,13 +224,12 @@ public class DBAccess implements IDataAccess {
 
     @Override
     public Expense addExpense(Expense expense) {
-        SQLiteDatabase expenseDb = expenseHelper.getWritableDatabase();
-        SQLiteDatabase expenseMemberDb = expenseMemberHelper.getWritableDatabase();
+        SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         try {
 
-            expenseDb.beginTransaction();
-            expenseMemberDb.beginTransaction();
+            db.beginTransaction();
+
 
             Date date = new Date();
             String formattedDate = isoSdf.format(date);
@@ -200,7 +237,7 @@ public class DBAccess implements IDataAccess {
             expenseValues.put(ExpenseContract.ExpenseEntry.COLUMN_NAME_Name, expense.Name);
             expenseValues.put(ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate, formattedDate);
 
-            long expenseId = expenseDb.insert(ExpenseContract.ExpenseEntry.TABLE_NAME, null, expenseValues);
+            long expenseId = db.insert(ExpenseContract.ExpenseEntry.TABLE_NAME, null, expenseValues);
 
             Log.i(LOG_TAG, "Inserted Expense:" + expense.Name + " Id:" + expenseId);
 
@@ -214,7 +251,7 @@ public class DBAccess implements IDataAccess {
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount, expense.PaidBy.get(member));
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type, ExpenseMemberContract.ExpenseMemberEntry.PAID);
 
-                expenseMemberDb.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
+                db.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
             }
 
             Log.i(LOG_TAG, " Adding PaidTo");
@@ -225,18 +262,16 @@ public class DBAccess implements IDataAccess {
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount, expense.PaidTo.get(member));
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type, ExpenseMemberContract.ExpenseMemberEntry.OWE);
 
-                expenseMemberDb.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
+                db.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
             }
 
             return expense;
 
         } catch (Exception ex) {
             Log.e(LOG_TAG, ex.toString());
-            expenseDb.endTransaction();
-            expenseMemberDb.endTransaction();
+            db.endTransaction();
         } finally {
-            expenseDb.close();
-            expenseMemberDb.close();
+            db.close();
         }
 
         return null;
@@ -246,7 +281,7 @@ public class DBAccess implements IDataAccess {
     public ArrayList<Expense> getExpenses() {
         // Readable DB Helper
 
-        try (SQLiteDatabase expenseDb = expenseHelper.getReadableDatabase(); SQLiteDatabase expenseMemberDb = expenseMemberHelper.getReadableDatabase()) {
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
             String[] projection = {
                     ExpenseContract.ExpenseEntry._ID,
                     ExpenseContract.ExpenseEntry.COLUMN_NAME_Name,
@@ -255,7 +290,8 @@ public class DBAccess implements IDataAccess {
 
             String sortOrder = ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate + " DESC";
             ArrayList<Expense> expenses = new ArrayList<>();
-            Cursor c = expenseDb.query(ExpenseContract.ExpenseEntry.TABLE_NAME,
+            
+            Cursor c = db.query(ExpenseContract.ExpenseEntry.TABLE_NAME,
                     projection,
                     null,
                     null,
@@ -289,7 +325,7 @@ public class DBAccess implements IDataAccess {
                     String[] selectionArgs = {String.valueOf(Id)};
 
 
-                    Cursor cex = expenseMemberDb.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
+                    Cursor cex = db.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
                             exprojection,
                             selection,
                             selectionArgs,
