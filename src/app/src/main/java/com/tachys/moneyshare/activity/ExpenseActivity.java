@@ -2,7 +2,9 @@ package com.tachys.moneyshare.activity;
 
 import android.app.Fragment;
 import android.app.FragmentTransaction;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
@@ -11,6 +13,7 @@ import android.view.MenuItem;
 import com.tachys.moneyshare.R;
 import com.tachys.moneyshare.dataaccess.IDataAccess;
 import com.tachys.moneyshare.fragment.ExpenseListFragment;
+import com.tachys.moneyshare.util.CommonUtils;
 
 public class ExpenseActivity extends ActionBarActivity implements ExpenseListFragment.OnFragmentInteractionListener {
 
@@ -32,6 +35,13 @@ public class ExpenseActivity extends ActionBarActivity implements ExpenseListFra
 
 
         }
+
+        SharedPreferences sharedpreferences = getSharedPreferences(CommonUtils.MONEYSHARE_PREF, Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedpreferences.edit();
+        editor.putString("my_member_id", "value");
+        editor.putString("my_mail_id", "value");
+        editor.commit();
+
 
     }
 
