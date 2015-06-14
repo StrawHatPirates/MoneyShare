@@ -2,6 +2,7 @@ package com.tachys.moneyshare.dataaccess;
 
 import com.tachys.moneyshare.model.Expense;
 import com.tachys.moneyshare.model.Member;
+import com.tachys.moneyshare.model.Settlement;
 
 import java.util.ArrayList;
 
@@ -19,4 +20,6 @@ public interface IDataAccess {
     Expense addExpense(Expense expense);
 
     ArrayList<Expense> getExpenses();
+
+    Settlement addSettlement(Settlement settlement);
 }

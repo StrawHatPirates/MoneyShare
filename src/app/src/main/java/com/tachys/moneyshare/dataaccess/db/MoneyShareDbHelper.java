@@ -8,6 +8,7 @@ import android.util.Log;
 import com.tachys.moneyshare.dataaccess.db.contracts.ExpenseContract;
 import com.tachys.moneyshare.dataaccess.db.contracts.ExpenseMemberContract;
 import com.tachys.moneyshare.dataaccess.db.contracts.MemberContract;
+import com.tachys.moneyshare.dataaccess.db.contracts.SettlementContract;
 
 public class MoneyShareDbHelper extends SQLiteOpenHelper {
 
@@ -33,9 +34,9 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
             "CREATE TABLE IF NOT EXISTS " + ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME + " ("
                     + ExpenseMemberContract.ExpenseMemberEntry._ID + " INTEGER PRIMARY KEY,"
                     + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId + INTEGER_TYPE + COMMA_SEP
-                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId + INTEGER_TYPE + COMMA_SEP
-                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount + DOUBLE_TYPE + COMMA_SEP
-                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type + TEXT_TYPE + " )";
+                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE + INTEGER_TYPE + COMMA_SEP
+                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER + INTEGER_TYPE + COMMA_SEP
+                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT + DOUBLE_TYPE + " )";
 
     private static final String SQL_DELETE_EXPENSEMEMBERS =
             "DROP TABLE IF EXISTS " + ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME;
@@ -50,6 +51,16 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
     private static final String SQL_DELETE_MEMBERS =
             "DROP TABLE IF EXISTS " + MemberContract.MemberEntry.TABLE_NAME;
 
+    private static final String SQL_CREATE_SETTLEMENTS =
+            "CREATE TABLE IF NOT EXISTS " + SettlementContract.SettlementEntry.TABLE_NAME + " ("
+                    + SettlementContract.SettlementEntry._ID + " INTEGER PRIMARY KEY,"
+                    + SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID + INTEGER_TYPE + COMMA_SEP
+                    + SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID + INTEGER_TYPE + COMMA_SEP
+                    + SettlementContract.SettlementEntry.COLUMN_NAME_AMOUNT + DOUBLE_TYPE + " )";
+
+    private static final String SQL_DELETE_SETTLEMENTS =
+            "DROP TABLE IF EXISTS " + SettlementContract.SettlementEntry.TABLE_NAME;
+
     public MoneyShareDbHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
@@ -60,15 +71,17 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
         db.execSQL(SQL_CREATE_EXPENSES);
         db.execSQL(SQL_CREATE_MEMBERS);
         db.execSQL(SQL_CREATE_EXPENSEMEMBERS);
+        db.execSQL(SQL_CREATE_SETTLEMENTS);
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // The local DB is going to be just a cache. The APP will fetch all the data from the server again.
-        Log.i(LOG_TAG, "Deleting Table if exists");
+        Log.i(LOG_TAG, "Upgrade Table Called.");
         //db.execSQL(SQL_DELETE_EXPENSES);
         //db.execSQL(SQL_DELETE_MEMBERS);
         ///db.execSQL(SQL_DELETE_EXPENSEMEMBERS);
+        ///db.execSQL(SQL_DELETE_SETTLEMENTS);
         ///onCreate(db);
     }
 }

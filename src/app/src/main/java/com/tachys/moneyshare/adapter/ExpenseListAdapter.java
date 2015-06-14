@@ -44,8 +44,10 @@ public class ExpenseListAdapter extends ArrayAdapter<Expense> {
             }
         });
         holder.title.setText(getItem(position).Name);
-        holder.amt.setText(String.valueOf(getItem(position).getCumulativeAmount()));
-        if (getItem(position).getCumulativeAmount() >= 0) {
+        //TODO: Get Current User details from the SharedPref and use it here.
+        double amountForPerson = getItem(position).getAmountForPerson(1);
+        holder.amt.setText(String.valueOf(amountForPerson));
+        if (amountForPerson >= 0) {
             holder.rl.setBackgroundResource(R.color.green_background);
         } else {
             holder.rl.setBackgroundResource(R.color.red_background);

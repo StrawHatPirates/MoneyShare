@@ -10,8 +10,10 @@ import com.tachys.moneyshare.dataaccess.IDataAccess;
 import com.tachys.moneyshare.dataaccess.db.contracts.ExpenseContract;
 import com.tachys.moneyshare.dataaccess.db.contracts.ExpenseMemberContract;
 import com.tachys.moneyshare.dataaccess.db.contracts.MemberContract;
+import com.tachys.moneyshare.dataaccess.db.contracts.SettlementContract;
 import com.tachys.moneyshare.model.Expense;
 import com.tachys.moneyshare.model.Member;
+import com.tachys.moneyshare.model.Settlement;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -22,14 +24,12 @@ import java.util.Locale;
 
 public class DBAccess implements IDataAccess {
     private final String LOG_TAG = "DBAccess";
-    private Context context;
     private MoneyShareDbHelper dbHelper;
 
     private String dateFormat = "yyyy-MM-dd HH:mm:ss";
     private final SimpleDateFormat isoSdf = new SimpleDateFormat(dateFormat, Locale.ENGLISH);
 
     public DBAccess(Context context) {
-        this.context = context;
         dbHelper = new MoneyShareDbHelper(context);
     }
 
@@ -224,57 +224,78 @@ public class DBAccess implements IDataAccess {
 
     @Override
     public Expense addExpense(Expense expense) {
+
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
         try {
 
+            Log.v(LOG_TAG, "Starting Writable DB Transaction");
             db.beginTransaction();
 
             Date date = new Date();
             String formattedDate = isoSdf.format(date);
+
+            // Forming Content values for the expense table
             ContentValues expenseValues = new ContentValues();
             expenseValues.put(ExpenseContract.ExpenseEntry.COLUMN_NAME_Name, expense.Name);
             expenseValues.put(ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate, formattedDate);
 
+            // inserting
             long expenseId = db.insert(ExpenseContract.ExpenseEntry.TABLE_NAME, null, expenseValues);
+
+            if (expenseId == -1) {
+                Log.e(LOG_TAG, "Insertion failed!!");
+                //TODO: Add error handling.
+                return null;
+            }
 
             Log.i(LOG_TAG, "Inserted Expense:" + expense.Name + " Id:" + expenseId);
 
             expense.Id = expenseId;
 
-            Log.i(LOG_TAG, " Adding PaidBy");
-            for (Member member : expense.PaidBy.keySet()) {
+            //Expense Member Table Calculations
+            double totalAmount = expense.getTotalAmount();
 
-                ContentValues expenseMemberValues = new ContentValues();
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId, expenseId);
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId, member.Id);
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount, expense.PaidBy.get(member));
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type, ExpenseMemberContract.ExpenseMemberEntry.PAID);
+            HashMap<Long, Double> memberToPercentageMap = new HashMap<>();
 
-                db.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
-            }
-
-            Log.i(LOG_TAG, " Adding PaidTo");
+            // Calculated percentage of the total amount each person owes.
             for (Member member : expense.PaidTo.keySet()) {
-
-                ContentValues expenseMemberValues = new ContentValues();
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId, expenseId);
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId, member.Id);
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount, expense.PaidTo.get(member));
-                expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type, ExpenseMemberContract.ExpenseMemberEntry.OWE);
-
-                db.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
+                Double amountOwed = expense.PaidTo.get(member);
+                Double percentageOwed = amountOwed / totalAmount;
+                memberToPercentageMap.put(member.Id, percentageOwed);
             }
 
+            for (Member memberPaid : expense.PaidBy.keySet()) {
+                double amountPaid = expense.PaidBy.get(memberPaid);
+
+                for (Long owedMemberId : memberToPercentageMap.keySet()) {
+                    double amountOwed = amountPaid * memberToPercentageMap.get(owedMemberId);
+
+                    ContentValues expenseMemberValues = new ContentValues();
+                    expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId, expenseId);
+                    expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER, memberPaid.Id);
+                    expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE, owedMemberId);
+                    expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT, amountOwed);
+
+                    Log.v(LOG_TAG, String.format("Addign Expense member for ExpenseId : %d Payee: %d, Payer: %d, Amount : %f", expenseId, owedMemberId, memberPaid.Id, amountOwed));
+                    long exmemId = db.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
+
+                    if (exmemId == -1) {
+                        Log.e(LOG_TAG, "Insertion failed!!");
+                        //TODO: Add error handling.
+                        return null;
+                    }
+                }
+            }
+
+            Log.v(LOG_TAG, "Marking DB Transaction Successfull!");
             db.setTransactionSuccessful();
-
-
             return expense;
 
         } catch (Exception ex) {
             Log.e(LOG_TAG, ex.toString());
-
         } finally {
+            Log.v(LOG_TAG, "Ending DB Transaction!");
             db.endTransaction();
             db.close();
         }
@@ -312,23 +333,26 @@ public class DBAccess implements IDataAccess {
                     String Name = c.getString(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry.COLUMN_NAME_Name));
                     String formattedDate = c.getString(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate));
 
-                    Log.i(LOG_TAG, "Got Expense :" + Id + Name + formattedDate);
+                    Log.i(LOG_TAG, String.format("Fetched Expense with Id:%d, Name:%s", Id, Name));
                     Expense expense = new Expense();
                     expense.Id = Id;
                     expense.Name = Name;
                     expense.LastUpdated = isoSdf.parse(formattedDate);
-                    expense.PaidBy = new HashMap<>();
-                    expense.PaidTo = new HashMap<>();
 
                     String[] exprojection = {
                             ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId,
-                            ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId,
-                            ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount,
-                            ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type,
+                            ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER,
+                            ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE,
+                            ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT,
                     };
+
+                    String orderBy = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER + " DESC";
 
                     String selection = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId + " =?";
                     String[] selectionArgs = {String.valueOf(Id)};
+
+                    HashMap<Long, Double> PaidBy = new HashMap<>();
+                    HashMap<Long, Double> PaidTo = new HashMap<>();
 
                     try (SQLiteDatabase exDB = dbHelper.getReadableDatabase()) {
                         Cursor cex = exDB.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
@@ -337,31 +361,51 @@ public class DBAccess implements IDataAccess {
                                 selectionArgs,
                                 null,
                                 null,
-                                null);
+                                orderBy);
 
                         if (cex.moveToFirst()) {
 
                             do {
                                 long expenseId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId));
-                                long memberId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId));
-                                Double amount = cex.getDouble(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount));
-                                String type = cex.getString(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type));
+                                long payerId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER));
+                                long payeeId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE));
+                                Double amount = cex.getDouble(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT));
 
-                                Log.i(LOG_TAG, "Expense member:" + expenseId + memberId);
+                                if (PaidBy.containsKey(payerId)) {
+                                    Double existingAmount = PaidBy.get(payerId);
+                                    PaidBy.remove(payerId);
+                                    Double newAmount = existingAmount + amount;
+                                    PaidBy.put(payerId, newAmount);
+                                } else {
+                                    PaidBy.put(payerId, amount);
+                                }
+
+                                if (PaidTo.containsKey(payeeId)) {
+                                    Double existingAmount = PaidTo.get(payeeId);
+                                    PaidTo.remove(payeeId);
+                                    Double newAmount = existingAmount + amount;
+                                    PaidTo.put(payeeId, newAmount);
+                                } else {
+                                    PaidTo.put(payeeId, amount);
+                                }
+
+                                Log.v(LOG_TAG, String.format("Expense Member Payee:%d, Payer:%d, Amount:%f", payeeId, payerId, amount));
                                 if (expenseId != Id) {
                                     Log.e(LOG_TAG, "Got a different expense id than the one expected");
                                     //TODO: DB Corrupt have to check
                                     return new ArrayList<>();
                                 }
-
-                                Member member = getMember(memberId);
-                                if (type.equals(ExpenseMemberContract.ExpenseMemberEntry.PAID)) {
-                                    expense.PaidBy.put(member, amount);
-                                } else if (type.equals(ExpenseMemberContract.ExpenseMemberEntry.OWE)) {
-                                    expense.PaidTo.put(member, amount);
-                                }
-
                             } while (cex.moveToNext());
+
+                            for (long memberId : PaidBy.keySet()) {
+                                Member member = getMember(memberId);
+                                expense.PaidBy.put(member, PaidBy.get(memberId));
+                            }
+
+                            for (long memberId : PaidTo.keySet()) {
+                                Member member = getMember(memberId);
+                                expense.PaidTo.put(member, PaidTo.get(memberId));
+                            }
                         }
                     }
 
@@ -378,5 +422,26 @@ public class DBAccess implements IDataAccess {
 
         Log.i(LOG_TAG, "Returned expenses" + expenses.toString());
         return expenses;
+    }
+
+    @Override
+    public Settlement addSettlement(Settlement settlement) {
+        try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
+
+            // Create a new map of values, where column names are the keys
+            ContentValues values = new ContentValues();
+            values.put(SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID, settlement.PayeeId);
+            values.put(SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID, settlement.PayerId);
+            values.put(SettlementContract.SettlementEntry.COLUMN_NAME_AMOUNT, settlement.PaymentAmount);
+
+            // Insert the new row, returning the primary key value of the new row
+            long newRowId;
+            newRowId = db.insert(SettlementContract.SettlementEntry.TABLE_NAME, null, values);
+
+            Log.i(LOG_TAG, "Added Settlement Id:" + newRowId);
+            settlement.Id = newRowId;
+
+            return settlement;
+        }
     }
 }
