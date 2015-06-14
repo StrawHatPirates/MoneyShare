@@ -230,7 +230,6 @@ public class DBAccess implements IDataAccess {
 
             db.beginTransaction();
 
-
             Date date = new Date();
             String formattedDate = isoSdf.format(date);
             ContentValues expenseValues = new ContentValues();
@@ -245,6 +244,7 @@ public class DBAccess implements IDataAccess {
 
             Log.i(LOG_TAG, " Adding PaidBy");
             for (Member member : expense.PaidBy.keySet()) {
+
                 ContentValues expenseMemberValues = new ContentValues();
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId, expenseId);
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId, member.Id);
@@ -256,6 +256,7 @@ public class DBAccess implements IDataAccess {
 
             Log.i(LOG_TAG, " Adding PaidTo");
             for (Member member : expense.PaidTo.keySet()) {
+
                 ContentValues expenseMemberValues = new ContentValues();
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId, expenseId);
                 expenseMemberValues.put(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId, member.Id);
@@ -265,12 +266,16 @@ public class DBAccess implements IDataAccess {
                 db.insert(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME, null, expenseMemberValues);
             }
 
+            db.setTransactionSuccessful();
+
+
             return expense;
 
         } catch (Exception ex) {
             Log.e(LOG_TAG, ex.toString());
-            db.endTransaction();
+
         } finally {
+            db.endTransaction();
             db.close();
         }
 
@@ -279,8 +284,9 @@ public class DBAccess implements IDataAccess {
 
     @Override
     public ArrayList<Expense> getExpenses() {
-        // Readable DB Helper
+        ArrayList<Expense> expenses = new ArrayList<>();
 
+        // Readable DB Helper
         try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
             String[] projection = {
                     ExpenseContract.ExpenseEntry._ID,
@@ -289,8 +295,8 @@ public class DBAccess implements IDataAccess {
             };
 
             String sortOrder = ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate + " DESC";
-            ArrayList<Expense> expenses = new ArrayList<>();
-            
+
+
             Cursor c = db.query(ExpenseContract.ExpenseEntry.TABLE_NAME,
                     projection,
                     null,
@@ -298,15 +304,15 @@ public class DBAccess implements IDataAccess {
                     null,
                     null,
                     sortOrder);
-
+            Log.i(LOG_TAG, "Cursor size" + c.getCount());
             if (c.moveToFirst()) {
-
 
                 do {
                     long Id = c.getLong(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry._ID));
                     String Name = c.getString(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry.COLUMN_NAME_Name));
                     String formattedDate = c.getString(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate));
 
+                    Log.i(LOG_TAG, "Got Expense :" + Id + Name + formattedDate);
                     Expense expense = new Expense();
                     expense.Id = Id;
                     expense.Name = Name;
@@ -324,51 +330,53 @@ public class DBAccess implements IDataAccess {
                     String selection = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId + " =?";
                     String[] selectionArgs = {String.valueOf(Id)};
 
+                    try (SQLiteDatabase exDB = dbHelper.getReadableDatabase()) {
+                        Cursor cex = exDB.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
+                                exprojection,
+                                selection,
+                                selectionArgs,
+                                null,
+                                null,
+                                null);
 
-                    Cursor cex = db.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
-                            exprojection,
-                            selection,
-                            selectionArgs,
-                            null,
-                            null,
-                            null);
+                        if (cex.moveToFirst()) {
 
-                    if (cex.moveToFirst()) {
+                            do {
+                                long expenseId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId));
+                                long memberId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId));
+                                Double amount = cex.getDouble(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount));
+                                String type = cex.getString(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type));
 
-                        do {
-                            long expenseId = cex.getLong(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId));
-                            long memberId = cex.getLong(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId));
-                            Double amount = cex.getDouble(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount));
-                            String type = cex.getString(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type));
+                                Log.i(LOG_TAG, "Expense member:" + expenseId + memberId);
+                                if (expenseId != Id) {
+                                    Log.e(LOG_TAG, "Got a different expense id than the one expected");
+                                    //TODO: DB Corrupt have to check
+                                    return new ArrayList<>();
+                                }
 
-                            if (expenseId != Id) {
-                                Log.e(LOG_TAG, "Got a differnet expense id than the one expected");
-                                return null;
-                            }
+                                Member member = getMember(memberId);
+                                if (type.equals(ExpenseMemberContract.ExpenseMemberEntry.PAID)) {
+                                    expense.PaidBy.put(member, amount);
+                                } else if (type.equals(ExpenseMemberContract.ExpenseMemberEntry.OWE)) {
+                                    expense.PaidTo.put(member, amount);
+                                }
 
-                            Member member = getMember(memberId);
-                            if (type.equals(ExpenseMemberContract.ExpenseMemberEntry.PAID)) {
-                                expense.PaidBy.put(member, amount);
-                            } else if (type.equals(ExpenseMemberContract.ExpenseMemberEntry.OWE)) {
-                                expense.PaidTo.put(member, amount);
-                            }
-
-                        } while (cex.moveToNext());
+                            } while (cex.moveToNext());
+                        }
                     }
 
-
+                    Log.i(LOG_TAG, " Expense" + expense);
                     expenses.add(expense);
                 } while (c.moveToNext());
 
             }
-
-            return expenses;
 
         } catch (ParseException pex) {
             Log.e(LOG_TAG, "Exception while parsing : " + pex.toString());
             //throw new Exception("Not Able to parse the date format");
         }
 
-        return null;
+        Log.i(LOG_TAG, "Returned expenses" + expenses.toString());
+        return expenses;
     }
 }

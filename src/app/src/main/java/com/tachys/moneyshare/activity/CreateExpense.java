@@ -54,7 +54,7 @@ public class CreateExpense extends ActionBarActivity {
         if (id == R.id.create) {
 
             dataAccess.addExpense(e);
-
+            finish();
             return true;
         }
 

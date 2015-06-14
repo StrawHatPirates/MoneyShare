@@ -1,8 +1,9 @@
 package com.tachys.moneyshare.activity;
 
+import android.app.Fragment;
+import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,6 +15,7 @@ import com.tachys.moneyshare.fragment.ExpenseListFragment;
 public class ExpenseActivity extends ActionBarActivity implements ExpenseListFragment.OnFragmentInteractionListener {
 
     IDataAccess dataAccess;
+    Fragment listFragment;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -24,9 +26,9 @@ public class ExpenseActivity extends ActionBarActivity implements ExpenseListFra
             if (savedInstanceState != null) {
                 return;
             }
-            Fragment listFragment = new ExpenseListFragment();
+            listFragment = new ExpenseListFragment();
 
-            getSupportFragmentManager().beginTransaction().add(R.id.expense_fragment, listFragment).commit();
+            getFragmentManager().beginTransaction().add(R.id.expense_fragment, listFragment).commit();
 
 
         }
@@ -61,6 +63,16 @@ public class ExpenseActivity extends ActionBarActivity implements ExpenseListFra
 
     @Override
     public void onFragmentInteraction(String id) {
+
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+        fragTransaction.detach(listFragment);
+        fragTransaction.attach(listFragment);
+        fragTransaction.commit();
 
     }
 }

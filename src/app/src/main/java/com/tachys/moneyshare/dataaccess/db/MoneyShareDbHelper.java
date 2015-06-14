@@ -14,7 +14,7 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
     private static final String LOG_TAG = "MoneyShareDbHelper";
     private static final String TEXT_TYPE = " TEXT";
     private static final String COMMA_SEP = ",";
-    private static final String REAL_TYPE = " REAL";
+    private static final String DOUBLE_TYPE = " DOUBLE";
     private static final String INTEGER_TYPE = " INTEGER";
 
     public static final int DATABASE_VERSION = 1;
@@ -23,7 +23,8 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
     private static final String SQL_CREATE_EXPENSES =
             "CREATE TABLE IF NOT EXISTS " + ExpenseContract.ExpenseEntry.TABLE_NAME + " ("
                     + ExpenseContract.ExpenseEntry._ID + " INTEGER PRIMARY KEY,"
-                    + ExpenseContract.ExpenseEntry.COLUMN_NAME_Name + TEXT_TYPE + COMMA_SEP + " )";
+                    + ExpenseContract.ExpenseEntry.COLUMN_NAME_Name + TEXT_TYPE + COMMA_SEP
+                    + ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate + TEXT_TYPE + " )";
 
     private static final String SQL_DELETE_EXPENSES =
             "DROP TABLE IF EXISTS " + ExpenseContract.ExpenseEntry.TABLE_NAME;
@@ -33,8 +34,8 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
                     + ExpenseMemberContract.ExpenseMemberEntry._ID + " INTEGER PRIMARY KEY,"
                     + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId + INTEGER_TYPE + COMMA_SEP
                     + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId + INTEGER_TYPE + COMMA_SEP
-                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type + TEXT_TYPE + COMMA_SEP
-                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount + REAL_TYPE + " )";
+                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount + DOUBLE_TYPE + COMMA_SEP
+                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type + TEXT_TYPE + " )";
 
     private static final String SQL_DELETE_EXPENSEMEMBERS =
             "DROP TABLE IF EXISTS " + ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME;
@@ -44,7 +45,7 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
                     + MemberContract.MemberEntry._ID + " INTEGER PRIMARY KEY,"
                     + MemberContract.MemberEntry.COLUMN_NAME_Name + TEXT_TYPE + COMMA_SEP
                     + MemberContract.MemberEntry.COLUMN_NAME_Email + TEXT_TYPE + COMMA_SEP
-                    + MemberContract.MemberEntry.COLUMN_NAME_Phone + TEXT_TYPE + COMMA_SEP + " )";
+                    + MemberContract.MemberEntry.COLUMN_NAME_Phone + TEXT_TYPE + " )";
 
     private static final String SQL_DELETE_MEMBERS =
             "DROP TABLE IF EXISTS " + MemberContract.MemberEntry.TABLE_NAME;
@@ -65,9 +66,9 @@ public class MoneyShareDbHelper extends SQLiteOpenHelper {
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         // The local DB is going to be just a cache. The APP will fetch all the data from the server again.
         Log.i(LOG_TAG, "Deleting Table if exists");
-        db.execSQL(SQL_DELETE_EXPENSES);
-        db.execSQL(SQL_DELETE_MEMBERS);
-        db.execSQL(SQL_DELETE_EXPENSEMEMBERS);
-        onCreate(db);
+        //db.execSQL(SQL_DELETE_EXPENSES);
+        //db.execSQL(SQL_DELETE_MEMBERS);
+        ///db.execSQL(SQL_DELETE_EXPENSEMEMBERS);
+        ///onCreate(db);
     }
 }
