@@ -13,6 +13,7 @@ import com.tachys.moneyshare.dataaccess.db.contracts.MemberContract;
 import com.tachys.moneyshare.dataaccess.db.contracts.SettlementContract;
 import com.tachys.moneyshare.model.Expense;
 import com.tachys.moneyshare.model.Member;
+import com.tachys.moneyshare.model.MicroExpense;
 import com.tachys.moneyshare.model.Settlement;
 
 import java.text.ParseException;
@@ -443,5 +444,179 @@ public class DBAccess implements IDataAccess {
 
             return settlement;
         }
+    }
+
+    @Override
+    public ArrayList<Settlement> getSettlements() {
+        ArrayList<Settlement> settlements = new ArrayList<>();
+
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
+            String[] projection = {
+                    SettlementContract.SettlementEntry._ID,
+                    SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID,
+                    SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID,
+                    SettlementContract.SettlementEntry.COLUMN_NAME_AMOUNT,
+            };
+
+            String orderBy = SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID + " DESC";
+
+            Cursor c = db.query(SettlementContract.SettlementEntry.TABLE_NAME,
+                    projection,
+                    null,
+                    null,
+                    null,
+                    null,
+                    orderBy);
+
+            if (c.moveToFirst()) {
+                do {
+                    long Id = c.getLong(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry._ID));
+                    long PayerId = c.getLong(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID));
+                    long PayeeId = c.getLong(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID));
+                    double Amount = c.getDouble(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry.COLUMN_NAME_AMOUNT));
+
+                    Settlement settlement = new Settlement(PayerId, PayeeId, Amount, Id);
+
+                    settlements.add(settlement);
+                } while (c.moveToNext());
+            }
+        }
+
+        return settlements;
+    }
+
+    public ArrayList<Settlement> getSettlements(long memberId) {
+        ArrayList<Settlement> settlements = new ArrayList<>();
+
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
+            String[] projection = {
+                    SettlementContract.SettlementEntry._ID,
+                    SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID,
+                    SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID,
+                    SettlementContract.SettlementEntry.COLUMN_NAME_AMOUNT,
+            };
+
+            String selection = SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID + " =? OR " + SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID + " =?";
+            String[] selectionArgs = {String.valueOf(memberId), String.valueOf(memberId)};
+
+            String orderBy = SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID + " DESC";
+
+            Cursor c = db.query(SettlementContract.SettlementEntry.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    orderBy);
+
+            if (c.moveToFirst()) {
+                do {
+                    long Id = c.getLong(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry._ID));
+                    long PayerId = c.getLong(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry.COLUMN_NAME_PAYERID));
+                    long PayeeId = c.getLong(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry.COLUMN_NAME_PAYEEID));
+                    double Amount = c.getDouble(c.getColumnIndexOrThrow(SettlementContract.SettlementEntry.COLUMN_NAME_AMOUNT));
+
+                    Settlement settlement = new Settlement(PayerId, PayeeId, Amount, Id);
+
+                    settlements.add(settlement);
+                } while (c.moveToNext());
+            }
+        }
+
+        return settlements;
+    }
+
+    public ArrayList<MicroExpense> getMicroExpense(long memberId) {
+        ArrayList<MicroExpense> microExpenses = new ArrayList<>();
+
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
+            String[] projection = {
+                    ExpenseMemberContract.ExpenseMemberEntry._ID,
+                    ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER,
+                    ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE,
+                    ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT,
+                    ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId,
+            };
+
+            String selection = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER + " =? OR " + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE + " =?";
+            String[] selectionArgs = {String.valueOf(memberId), String.valueOf(memberId)};
+
+            String orderBy = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER + " DESC";
+
+            Cursor c = db.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    orderBy);
+
+            if (c.moveToFirst()) {
+                do {
+                    long Id = c.getLong(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry._ID));
+                    long PayerId = c.getLong(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER));
+                    long PayeeId = c.getLong(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE));
+                    double Amount = c.getDouble(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT));
+                    long ExpenseId = c.getLong(c.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId));
+
+                    MicroExpense microExpense = new MicroExpense(PayerId, PayeeId, Amount, ExpenseId, Id);
+                    microExpenses.add(microExpense);
+                } while (c.moveToNext());
+            }
+        }
+
+        return microExpenses;
+    }
+
+    @Override
+    public HashMap<Member, Double> getOutstandingTx(long memberId) {
+        HashMap<Member, Double> outStandingTx = new HashMap<>();
+
+        HashMap<Long, Double> localOS = new HashMap<>();
+
+        ArrayList<Settlement> settlements = getSettlements(memberId);
+
+        for (Settlement settlement : settlements) {
+            double amount = 0;
+            if (settlement.PayerId == memberId) {
+                amount = settlement.PaymentAmount;
+            } else if (settlement.PayeeId == memberId) {
+                amount = -settlement.PaymentAmount;
+            }
+
+            if (localOS.containsKey(memberId)) {
+                double newAmount = localOS.get(memberId) + amount;
+                localOS.remove(memberId);
+                localOS.put(memberId, newAmount);
+            } else {
+                localOS.put(memberId, amount);
+            }
+        }
+
+        ArrayList<MicroExpense> microExpenses = getMicroExpense(memberId);
+
+        for (MicroExpense microExpense : microExpenses) {
+            double amount = 0;
+            if (microExpense.PayerId == memberId) {
+                amount = microExpense.Amount;
+            } else if (microExpense.PayeeId == memberId) {
+                amount = -microExpense.Amount;
+            }
+
+            if (localOS.containsKey(memberId)) {
+                double newAmount = localOS.get(memberId) + amount;
+                localOS.remove(memberId);
+                localOS.put(memberId, newAmount);
+            } else {
+                localOS.put(memberId, amount);
+            }
+        }
+
+        for (long id : localOS.keySet()) {
+            Member member = getMember(id);
+            outStandingTx.put(member, localOS.get(id));
+        }
+
+        return outStandingTx;
     }
 }

@@ -5,6 +5,7 @@ import com.tachys.moneyshare.model.Member;
 import com.tachys.moneyshare.model.Settlement;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public interface IDataAccess {
     Member addMember(Member member);
@@ -22,4 +23,10 @@ public interface IDataAccess {
     ArrayList<Expense> getExpenses();
 
     Settlement addSettlement(Settlement settlement);
+
+    ArrayList<Settlement> getSettlements();
+
+    ArrayList<Settlement> getSettlements(long memberId);
+
+    HashMap<Member, Double> getOutstandingTx(long memberId);
 }
