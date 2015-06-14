@@ -1,11 +1,13 @@
 package com.tachys.moneyshare.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
 import com.tachys.moneyshare.R;
+import com.tachys.moneyshare.util.CommonUtils;
 
 public class FlashScreen extends ActionBarActivity {
 
@@ -13,6 +15,18 @@ public class FlashScreen extends ActionBarActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_flash_screen);
+
+        String res = CommonUtils.getPref(getBaseContext(), "my_mail_id");
+        Intent i = new Intent();
+        i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        if (res == null) {
+            i.setClassName(getBaseContext(), "com.tachys.moneyshare.activity.MoneyShareWelcome");
+            startActivity(i);
+        } else {
+            i.setClassName(getBaseContext(), "com.tachys.moneyshare.activity.ExpenseActivity");
+            startActivity(i);
+        }
+        finish();
     }
 
     @Override

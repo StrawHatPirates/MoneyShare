@@ -12,4 +12,8 @@
     <string name="cancel">Cancel</string>
     <string name="title_activity_expense_detail">ExpenseDetail</string>
     <string name="title_activity_flash_screen">FlashScreen</string>
+    <string name="title_activity_money_share_welcome">MoneyShareWelcome</string>
+    <string name="enter_name">Enter Name</string>
+    <string name="phone_number">Enter phone number</string>
+    <string name="enter_mail">Enter mail ID</string>
 </resources>

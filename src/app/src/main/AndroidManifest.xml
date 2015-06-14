@@ -10,6 +10,21 @@
         <activity
             android:name=".activity.ExpenseActivity"
             android:label="@string/title_activity_main">
+
+        </activity>
+        <activity
+            android:name=".activity.CreateExpense"
+            android:label="@string/title_activity_create_expense">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.tachys.moneyshare.activity.ExpenseActivity" />
+        </activity>
+        <activity
+            android:name=".activity.ExpenseDetail"
+            android:label="@string/title_activity_expense_detail" />
+        <activity
+            android:name=".activity.FlashScreen"
+            android:label="@string/title_activity_flash_screen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -17,18 +32,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".activity.CreateExpense"
-            android:label="@string/title_activity_create_expense">
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.tachys.moneyshare.activity.ExpenseActivity"></meta-data>
-        </activity>
-        <activity
-            android:name=".activity.ExpenseDetail"
-            android:label="@string/title_activity_expense_detail" />
-        <activity
-            android:name=".activity.FlashScreen"
-            android:label="@string/title_activity_flash_screen"></activity>
+            android:name=".activity.MoneyShareWelcome"
+            android:label="@string/title_activity_money_share_welcome" />
     </application>
 
 </manifest>
