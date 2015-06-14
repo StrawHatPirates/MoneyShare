@@ -10,12 +10,12 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.tachys.moneyshare.R;
-import com.tachys.moneyshare.fragment.dummy.DummyContent;
+import com.tachys.moneyshare.model.Expense;
 
 import java.util.List;
 
-public class ExpenseListAdapter extends ArrayAdapter<DummyContent.DummyItem> {
-    public ExpenseListAdapter(Context context, List<DummyContent.DummyItem> items) {
+public class ExpenseListAdapter extends ArrayAdapter<Expense> {
+    public ExpenseListAdapter(Context context, List<Expense> items) {
         super(context, R.layout.expense_list_item, items);
     }
 
@@ -43,9 +43,9 @@ public class ExpenseListAdapter extends ArrayAdapter<DummyContent.DummyItem> {
                 getContext().startActivity(i);
             }
         });
-        holder.title.setText(getItem(position).title);
-        holder.amt.setText(getItem(position).amt);
-        if (Integer.valueOf(getItem(position).amt) >= 0) {
+        holder.title.setText(getItem(position).Name);
+        holder.amt.setText(String.valueOf(getItem(position).getCumulativeAmount()));
+        if (getItem(position).getCumulativeAmount() >= 0) {
             holder.rl.setBackgroundResource(R.color.green_background);
         } else {
             holder.rl.setBackgroundResource(R.color.red_background);

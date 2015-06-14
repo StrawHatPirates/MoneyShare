@@ -16,7 +16,7 @@ public class MemberDbHelper extends SQLiteOpenHelper {
                     + MemberContract.MemberEntry._ID + " INTEGER PRIMARY KEY,"
                     + MemberContract.MemberEntry.COLUMN_NAME_Name + TEXT_TYPE + COMMA_SEP
                     + MemberContract.MemberEntry.COLUMN_NAME_Email + TEXT_TYPE + COMMA_SEP
-                    + MemberContract.MemberEntry.COLUMN_NAME_Phone + TEXT_TYPE + COMMA_SEP + " )";
+                    + MemberContract.MemberEntry.COLUMN_NAME_Phone + TEXT_TYPE + " )";
 
     private static final String SQL_DELETE_MEMBERS =
             "DROP TABLE IF EXISTS " + MemberContract.MemberEntry.TABLE_NAME;

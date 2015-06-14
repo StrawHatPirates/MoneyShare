@@ -13,7 +13,8 @@ import android.widget.TextView;
 
 import com.tachys.moneyshare.R;
 import com.tachys.moneyshare.adapter.ExpenseListAdapter;
-import com.tachys.moneyshare.fragment.dummy.DummyContent;
+import com.tachys.moneyshare.dataaccess.IDataAccess;
+import com.tachys.moneyshare.dataaccess.db.DBAccess;
 
 /**
  * A fragment representing a list of Items.
@@ -38,25 +39,18 @@ public class ExpenseListFragment extends Fragment implements AbsListView.OnItemC
      * Views.
      */
     private ListAdapter mAdapter;
+    private IDataAccess dataAccess;
 
-    public static ExpenseListFragment newInstance(String param1, String param2) {
-        ExpenseListFragment fragment = new ExpenseListFragment();
-        Bundle args = new Bundle();
-        fragment.setArguments(args);
-        return fragment;
-    }
-
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
     public ExpenseListFragment() {
+
     }
+
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mAdapter = new ExpenseListAdapter(getActivity().getBaseContext(), DummyContent.ITEMS);
+        dataAccess = new DBAccess(getActivity().getBaseContext());
+        mAdapter = new ExpenseListAdapter(getActivity().getBaseContext(), dataAccess.getExpenses());
     }
 
     @Override
@@ -96,7 +90,7 @@ public class ExpenseListFragment extends Fragment implements AbsListView.OnItemC
         if (null != mListener) {
             // Notify the active callbacks interface (the activity, if the
             // fragment is attached to one) that an item has been selected.
-            mListener.onFragmentInteraction(DummyContent.ITEMS.get(position).amt);
+            //mListener.onFragmentInteraction(dataAccess.getExpenses().get(position).getCumulativeAmount());
         }
     }
 

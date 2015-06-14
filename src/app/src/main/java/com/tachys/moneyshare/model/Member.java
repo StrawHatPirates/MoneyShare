@@ -9,6 +9,12 @@ public class Member {
         this.Phone = Phone;
     }
 
+    public Member(String Name, String Email, String Phone) {
+        this.Email = Email;
+        this.Name = Name;
+        this.Phone = Phone;
+    }
+
     public long Id;
     public String Name;
     public String Email;

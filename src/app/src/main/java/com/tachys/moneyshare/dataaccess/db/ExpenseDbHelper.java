@@ -14,7 +14,8 @@ public class ExpenseDbHelper extends SQLiteOpenHelper {
     private static final String SQL_CREATE_EXPENSES =
             "CREATE TABLE IF NOT EXISTS " + ExpenseContract.ExpenseEntry.TABLE_NAME + " ("
                     + ExpenseContract.ExpenseEntry._ID + " INTEGER PRIMARY KEY,"
-                    + ExpenseContract.ExpenseEntry.COLUMN_NAME_Name + TEXT_TYPE + COMMA_SEP + " )";
+                    + ExpenseContract.ExpenseEntry.COLUMN_NAME_Name + TEXT_TYPE + COMMA_SEP
+                    + ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate + TEXT_TYPE + " )";
 
     private static final String SQL_DELETE_EXPENSES =
             "DROP TABLE IF EXISTS " + ExpenseContract.ExpenseEntry.TABLE_NAME;

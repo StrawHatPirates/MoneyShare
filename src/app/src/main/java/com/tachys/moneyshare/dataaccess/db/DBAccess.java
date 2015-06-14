@@ -254,7 +254,7 @@ public class DBAccess implements IDataAccess {
             };
 
             String sortOrder = ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate + " DESC";
-
+            ArrayList<Expense> expenses = new ArrayList<>();
             Cursor c = expenseDb.query(ExpenseContract.ExpenseEntry.TABLE_NAME,
                     projection,
                     null,
@@ -264,7 +264,7 @@ public class DBAccess implements IDataAccess {
                     sortOrder);
 
             if (c.moveToFirst()) {
-                ArrayList<Expense> expenses = new ArrayList<>();
+
 
                 do {
                     long Id = c.getLong(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry._ID));
@@ -324,10 +324,9 @@ public class DBAccess implements IDataAccess {
                     expenses.add(expense);
                 } while (c.moveToNext());
 
-                return expenses;
             }
 
-            return null;
+            return expenses;
 
         } catch (ParseException pex) {
             Log.e(LOG_TAG, "Exception while parsing : " + pex.toString());

@@ -15,21 +15,28 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.tachys.moneyshare.R;
+import com.tachys.moneyshare.dataaccess.IDataAccess;
+import com.tachys.moneyshare.dataaccess.db.DBAccess;
+import com.tachys.moneyshare.model.Expense;
+import com.tachys.moneyshare.model.Member;
 
 public class CreateExpense extends ActionBarActivity {
 
     LinearLayout payer_layout, payee_layout;
     TextView title;
-
+    IDataAccess dataAccess;
+    Expense e;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_expense);
+        dataAccess = new DBAccess(getBaseContext());
         //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         title = (TextView) findViewById(R.id.enter_title);
         payer_layout = (LinearLayout) findViewById(R.id.payer_layout);
         payee_layout = (LinearLayout) findViewById(R.id.payee_layout);
+        e = new Expense();
         addPayer();
         addPayee();
     }
@@ -43,6 +50,13 @@ public class CreateExpense extends ActionBarActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         int id = item.getItemId();
+
+        if (id == R.id.create) {
+
+            dataAccess.addExpense(e);
+
+            return true;
+        }
 
         return id == R.id.action_settings || super.onOptionsItemSelected(item);
 
@@ -75,19 +89,36 @@ public class CreateExpense extends ActionBarActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateExpense.this);
 
         builder.setMessage("List of members");
+
+
         builder.setPositiveButton(R.string.done, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
+
                 remove_bt.setVisibility(View.VISIBLE);
                 ((TextView) v).setText("Selected");
-                amt.setText("34");
+                amt.setText("200");
                 v.setClickable(false);
                 if (isPayer) {
                     addPayer();
                 } else {
                     addPayee();
                 }
+
+                Member m1 = dataAccess.addMember(new Member("Paro", "parvezthepop@gmail.com", "9632744944"));
+
+                Member m2 = dataAccess.addMember(new Member("Tejo", "parvezthepop2@gmail.com", "9632744944"));
+
+
+                e.Name = "Trip";
+                e.PaidBy.put(m1, 200.0);
+                e.PaidTo.put(m2, 100.0);
+                e.PaidTo.put(m1, 100.0);
+
+
+
                 dialog.dismiss();
+
             }
         });
 

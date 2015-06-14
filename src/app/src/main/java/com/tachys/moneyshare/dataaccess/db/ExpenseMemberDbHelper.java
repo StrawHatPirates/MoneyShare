@@ -19,7 +19,7 @@ public class ExpenseMemberDbHelper extends SQLiteOpenHelper {
                     + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId + INTEGER_TYPE + COMMA_SEP
                     + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_MemberId + INTEGER_TYPE + COMMA_SEP
                     + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Type + TEXT_TYPE + COMMA_SEP
-                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount + REAL_TYPE + COMMA_SEP + " )";
+                    + ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_Amount + REAL_TYPE + " )";
 
     private static final String SQL_DELETE_EXPENSEMEMBERS =
             "DROP TABLE IF EXISTS " + ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME;

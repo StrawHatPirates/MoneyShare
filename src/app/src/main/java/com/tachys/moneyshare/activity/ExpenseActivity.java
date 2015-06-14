@@ -8,9 +8,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.tachys.moneyshare.R;
+import com.tachys.moneyshare.dataaccess.IDataAccess;
 import com.tachys.moneyshare.fragment.ExpenseListFragment;
 
 public class ExpenseActivity extends ActionBarActivity implements ExpenseListFragment.OnFragmentInteractionListener {
+
+    IDataAccess dataAccess;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -21,8 +24,6 @@ public class ExpenseActivity extends ActionBarActivity implements ExpenseListFra
             if (savedInstanceState != null) {
                 return;
             }
-
-
             Fragment listFragment = new ExpenseListFragment();
 
             getSupportFragmentManager().beginTransaction().add(R.id.expense_fragment, listFragment).commit();
