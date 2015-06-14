@@ -96,6 +96,48 @@ public class DBAccess implements IDataAccess {
     }
 
     @Override
+    public Member findMember(String email) {
+        try (SQLiteDatabase db = memberHelper.getReadableDatabase()) {
+            String[] projection = {
+                    MemberContract.MemberEntry._ID,
+                    MemberContract.MemberEntry.COLUMN_NAME_Name,
+                    MemberContract.MemberEntry.COLUMN_NAME_Email,
+                    MemberContract.MemberEntry.COLUMN_NAME_Phone,
+            };
+
+            String sortOrder = MemberContract.MemberEntry.COLUMN_NAME_Name + " DESC";
+
+            String selection = MemberContract.MemberEntry.COLUMN_NAME_Email + " =?";
+            String[] selectionArgs = {String.valueOf(email)};
+
+            Cursor c = db.query(MemberContract.MemberEntry.TABLE_NAME,
+                    projection,
+                    selection,
+                    selectionArgs,
+                    null,
+                    null,
+                    sortOrder);
+
+            if (c.moveToFirst()) {
+                Member member;
+
+
+                long Id = c.getLong(c.getColumnIndexOrThrow(MemberContract.MemberEntry._ID));
+                String Name = c.getString(c.getColumnIndexOrThrow(MemberContract.MemberEntry.COLUMN_NAME_Name));
+                String Email = c.getString(c.getColumnIndexOrThrow(MemberContract.MemberEntry.COLUMN_NAME_Email));
+                String Phone = c.getString(c.getColumnIndexOrThrow(MemberContract.MemberEntry.COLUMN_NAME_Phone));
+
+                member = new Member(Id, Name, Email, Phone);
+
+
+                return member;
+            }
+
+            return null;
+        }
+    }
+
+    @Override
     public ArrayList<Member> getMember() {
 
         // Readable DB Helper
