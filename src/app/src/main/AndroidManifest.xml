@@ -18,10 +18,17 @@
         </activity>
         <activity
             android:name=".activity.CreateExpense"
-            android:label="@string/title_activity_create_expense" />
+            android:label="@string/title_activity_create_expense">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="com.tachys.moneyshare.activity.ExpenseActivity"></meta-data>
+        </activity>
         <activity
             android:name=".activity.ExpenseDetail"
             android:label="@string/title_activity_expense_detail" />
+        <activity
+            android:name=".activity.FlashScreen"
+            android:label="@string/title_activity_flash_screen"></activity>
     </application>
 
 </manifest>

@@ -32,7 +32,7 @@ public class CreateExpense extends ActionBarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_create_expense);
         dataAccess = new DBAccess(getBaseContext());
-        //getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         title = (TextView) findViewById(R.id.enter_title);
         payer_layout = (LinearLayout) findViewById(R.id.payer_layout);
         payee_layout = (LinearLayout) findViewById(R.id.payee_layout);
@@ -56,6 +56,8 @@ public class CreateExpense extends ActionBarActivity {
             dataAccess.addExpense(e);
             finish();
             return true;
+        } else if (id == R.id.home) {
+            super.onBackPressed();
         }
 
         return id == R.id.action_settings || super.onOptionsItemSelected(item);
