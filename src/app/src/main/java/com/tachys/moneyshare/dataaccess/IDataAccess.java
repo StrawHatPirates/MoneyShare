@@ -12,6 +12,8 @@ public interface IDataAccess {
 
     ArrayList<Member> getMember();
 
+    Member getMember(long memberId);
+
     Expense addExpense(Expense expense);
 
     ArrayList<Expense> getExpenses();
