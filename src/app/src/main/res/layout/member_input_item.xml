@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="5dp"
+    android:layout_marginBottom="5dp">
+
+    <TextView
+        android:id="@+id/member_input_name"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp"
+        android:clickable="true"
+        android:textSize="20dp"
+        android:hint="Enter member" />
+
+    <TextView
+        android:id="@+id/amt"
+        android:layout_alignParentRight="true"
+        android:layout_marginRight="40dp"
+        android:gravity="center"
+        android:layout_width="wrap_content"
+        android:layout_height="30dp" />
+
+    <ImageButton
+        android:layout_width="25dp"
+        android:layout_height="20dp"
+        android:id="@+id/remove_item"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:scaleType="center"
+        android:adjustViewBounds="true"
+        android:src="@drawable/remove"
+        android:visibility="gone" />
+</RelativeLayout>

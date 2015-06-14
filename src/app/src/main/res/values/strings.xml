@@ -1,3 +1,14 @@
 <resources>
     <string name="app_name">MoneyShare</string>
+    <string name="title_activity_main">MainActivity</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+
+
+    <string name="create_expense">Add</string>
+    <string name="title_activity_create_expense">CreateExpense</string>
+    <string name="done">Done</string>
+    <string name="cancel">Cancel</string>
+    <string name="title_activity_expense_detail">ExpenseDetail</string>
 </resources>
