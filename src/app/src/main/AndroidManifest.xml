@@ -2,6 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="com.tachys.moneyshare">
 
+    <uses-permission android:name="android.permission.READ_CONTACTS" />
+
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -10,10 +12,10 @@
         <activity
             android:name=".activity.ExpenseActivity"
             android:label="@string/title_activity_main">
-
         </activity>
         <activity
             android:name=".activity.CreateExpense"
+            android:configChanges="orientation|screenSize|keyboardHidden"
             android:label="@string/title_activity_create_expense">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -34,6 +36,7 @@
         <activity
             android:name=".activity.MoneyShareWelcome"
             android:label="@string/title_activity_money_share_welcome" />
+
     </application>
 
 </manifest>

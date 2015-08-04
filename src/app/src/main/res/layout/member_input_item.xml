@@ -2,33 +2,53 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="5dp"
-    android:layout_marginBottom="5dp">
+    android:layout_marginBottom="5dp"
+    android:layout_marginTop="5dp">
+
+    <Button
+        android:id="@+id/morebutton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/more_button" />
 
     <TextView
         android:id="@+id/member_input_name"
         android:layout_width="wrap_content"
-        android:layout_height="30dp"
+        android:layout_height="34dp"
+        android:layout_toLeftOf="@id/morebutton"
         android:clickable="true"
+        android:hint="Enter member"
         android:textSize="20dp"
-        android:hint="Enter member" />
+        android:visibility="gone" />
 
-    <TextView
+    <EditText
         android:id="@+id/amt"
+        android:layout_width="50dp"
+        android:layout_height="40dp"
         android:layout_alignParentRight="true"
         android:layout_marginRight="40dp"
-        android:gravity="center"
-        android:layout_width="wrap_content"
-        android:layout_height="30dp" />
+        android:gravity="left"
+        android:hint="Rs" />
 
     <ImageButton
+        android:id="@+id/add_item"
         android:layout_width="25dp"
         android:layout_height="20dp"
-        android:id="@+id/remove_item"
         android:layout_alignParentRight="true"
         android:layout_centerVertical="true"
-        android:scaleType="center"
         android:adjustViewBounds="true"
+        android:scaleType="center"
+        android:src="@drawable/add"
+        android:visibility="gone" />
+
+    <ImageButton
+        android:id="@+id/remove_item"
+        android:layout_width="25dp"
+        android:layout_height="20dp"
+        android:layout_alignParentRight="true"
+        android:layout_centerVertical="true"
+        android:adjustViewBounds="true"
+        android:scaleType="center"
         android:src="@drawable/remove"
         android:visibility="gone" />
 </RelativeLayout>

@@ -1,20 +1,22 @@
 package com.tachys.moneyshare.fragment;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.ListFragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ListAdapter;
 import android.widget.TextView;
 
 import com.tachys.moneyshare.R;
 import com.tachys.moneyshare.adapter.ExpenseListAdapter;
 import com.tachys.moneyshare.dataaccess.IDataAccess;
 import com.tachys.moneyshare.dataaccess.db.DBAccess;
+import com.tachys.moneyshare.util.CommonUtils;
 
 /**
  * A fragment representing a list of Items.
@@ -25,8 +27,9 @@ import com.tachys.moneyshare.dataaccess.db.DBAccess;
  * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
  * interface.
  */
-public class ExpenseListFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class ExpenseListFragment extends ListFragment implements AbsListView.OnItemClickListener {
 
+    private static final String TAG = "ExpenseListFragment";
     private OnFragmentInteractionListener mListener;
 
     /**
@@ -38,16 +41,18 @@ public class ExpenseListFragment extends Fragment implements AbsListView.OnItemC
      * The Adapter which will be used to populate the ListView/GridView with
      * Views.
      */
-    private ListAdapter mAdapter;
+    private ExpenseListAdapter mAdapter;
     private IDataAccess dataAccess;
 
     public ExpenseListFragment() {
+        Log.i(TAG, "ExpenseListFragment");
 
     }
 
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
+        Log.i(TAG, "onCreate");
         super.onCreate(savedInstanceState);
         dataAccess = new DBAccess(getActivity().getBaseContext());
         mAdapter = new ExpenseListAdapter(getActivity().getBaseContext(), dataAccess.getExpenses());
@@ -56,20 +61,25 @@ public class ExpenseListFragment extends Fragment implements AbsListView.OnItemC
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
+        Log.i(TAG, "onCreateView");
         View view = inflater.inflate(R.layout.fragment_item, container, false);
-
+        //TextView tv = (TextView) view.findViewById(R.id.expense_message);
         // Set the adapter
         mListView = (AbsListView) view.findViewById(android.R.id.list);
+        /*if (mAdapter.getCount() <= 0) {
+            tv.setVisibility(View.VISIBLE);
+        } else {*/
+        //tv.setVisibility(View.GONE);
         mListView.setAdapter(mAdapter);
-
         // Set OnItemClickListener so we can be notified on item clicks
         mListView.setOnItemClickListener(this);
-
+        //}
         return view;
     }
 
     @Override
     public void onAttach(Activity activity) {
+        Log.i(TAG, "onAttach");
         super.onAttach(activity);
         try {
             mListener = (OnFragmentInteractionListener) activity;
@@ -77,6 +87,24 @@ public class ExpenseListFragment extends Fragment implements AbsListView.OnItemC
             throw new ClassCastException(activity.toString()
                     + " must implement OnFragmentInteractionListener");
         }
+    }
+
+    @Override
+    public void onResume() {
+        Log.i(TAG, "onResume");
+        super.onResume();
+    }
+
+    @Override
+    public void onPause() {
+        Log.i(TAG, "onPause");
+        super.onPause();
+    }
+
+    @Override
+    public void onStop() {
+        Log.i(TAG, "onStop");
+        super.onStop();
     }
 
     @Override
@@ -121,4 +149,15 @@ public class ExpenseListFragment extends Fragment implements AbsListView.OnItemC
         void onFragmentInteraction(String id);
     }
 
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i(TAG, "onActivityResult");
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CommonUtils.REQUEST_CREATE_EXPENSE && resultCode == CommonUtils.RESULT_CREATED_EXPENSE && data != null) {
+            Long id = data.getBundleExtra("extra") != null ? (data.getBundleExtra("extra")).getLong("id", -1) : -1;
+            if (id != -1) {
+                mAdapter.add(dataAccess.getExpense(id));
+            }
+        }
+    }
 }

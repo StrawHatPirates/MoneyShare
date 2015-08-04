@@ -19,14 +19,14 @@ public class Expense {
         double owedMoney = 0;
 
         for (Member member : this.PaidBy.keySet()) {
-            if (member.Id == memberId) {
+            if (member != null && member.Id == memberId) {
                 paidMoney = this.PaidBy.get(member);
                 break;
             }
         }
 
         for (Member member : this.PaidTo.keySet()) {
-            if (member.Id == memberId) {
+            if (member != null && member.Id == memberId) {
                 owedMoney = this.PaidTo.get(member);
                 break;
             }

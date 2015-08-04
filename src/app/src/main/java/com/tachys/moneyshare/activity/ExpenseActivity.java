@@ -1,36 +1,72 @@
 package com.tachys.moneyshare.activity;
 
-import android.app.Fragment;
-import android.app.FragmentTransaction;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.ActionBarActivity;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import com.tachys.moneyshare.R;
 import com.tachys.moneyshare.dataaccess.IDataAccess;
+import com.tachys.moneyshare.dataaccess.db.DBAccess;
 import com.tachys.moneyshare.fragment.ExpenseListFragment;
+import com.tachys.moneyshare.util.CommonUtils;
 
 public class ExpenseActivity extends ActionBarActivity implements ExpenseListFragment.OnFragmentInteractionListener {
 
+    private static final String TAG = "ExpenseActivity";
     IDataAccess dataAccess;
     Fragment listFragment;
+    FrameLayout fragment;
+    TextView tv;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.i(TAG, "onCreate");
         setContentView(R.layout.expense_activity);
+        tv = (TextView) findViewById(R.id.expense_message);
+        fragment = (FrameLayout) findViewById(R.id.expense_fragment);
+        //FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        //listFragment = new ExpenseListFragment();
 
-        if (findViewById(R.id.expense_fragment) != null) {
-            if (savedInstanceState != null) {
-                return;
+        initialize(savedInstanceState != null);
+
+    }
+
+
+    public void initialize(boolean isSaved) {
+        dataAccess = new DBAccess(getBaseContext());
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+        if (dataAccess.getExpenses().size() > 0) {
+            tv.setVisibility(View.GONE);
+            fragment.setVisibility(View.VISIBLE);
+            if (findViewById(R.id.expense_fragment) != null) {
+                if (isSaved) {
+                    return;
+                }
+                listFragment = new ExpenseListFragment();
+
+                transaction.add(R.id.expense_fragment, listFragment);
+                transaction.addToBackStack(null);
+                transaction.commit();
+
             }
-            listFragment = new ExpenseListFragment();
-
-            getFragmentManager().beginTransaction().add(R.id.expense_fragment, listFragment).commit();
+        } else {
+            tv.setVisibility(View.VISIBLE);
+            fragment.setVisibility(View.GONE);
+            if (listFragment != null) {
+                transaction.remove(listFragment);
+                transaction.commit();
+            }
         }
-
     }
 
     @Override
@@ -53,7 +89,7 @@ public class ExpenseActivity extends ActionBarActivity implements ExpenseListFra
         } else if (id == R.id.add_expense) {
             Intent i = new Intent();
             i.setClassName(getBaseContext(), "com.tachys.moneyshare.activity.CreateExpense");
-            startActivity(i);
+            startActivityForResult(i, CommonUtils.REQUEST_CREATE_EXPENSE, null);
         }
 
         return super.onOptionsItemSelected(item);
@@ -61,16 +97,37 @@ public class ExpenseActivity extends ActionBarActivity implements ExpenseListFra
 
     @Override
     public void onFragmentInteraction(String id) {
-
+        Log.i(TAG, "onFragmentInteraction");
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        FragmentTransaction fragTransaction = getFragmentManager().beginTransaction();
+        Log.i(TAG, "onResume");
+        /*FragmentTransaction fragTransaction = getSupportFragmentManager().beginTransaction();
         fragTransaction.detach(listFragment);
         fragTransaction.attach(listFragment);
-        fragTransaction.commit();
+        fragTransaction.commit();*/
 
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (getFragmentManager().getBackStackEntryCount() == 0) {
+            this.finish();
+        } else {
+            getFragmentManager().popBackStack();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        Log.i(TAG, "onActivityResult");
+        if (listFragment != null) {
+            listFragment.onActivityResult(requestCode, resultCode, data);
+        } else {
+            initialize(false);
+        }
     }
 }

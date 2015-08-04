@@ -8,4 +8,11 @@
         android:title="@string/done"
         android:orderInCategory="100"
         app:showAsAction="always" />
+
+    <!--    <item
+            android:id="@+id/refreshcontacts"
+            android:title="@string/refresh_contacts"
+            android:orderInCategory="100"
+            app:showAsAction="always" />-->
+
 </menu>

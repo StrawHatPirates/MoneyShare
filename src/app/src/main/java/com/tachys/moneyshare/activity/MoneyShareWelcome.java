@@ -11,6 +11,9 @@ import android.widget.EditText;
 import android.widget.Toast;
 
 import com.tachys.moneyshare.R;
+import com.tachys.moneyshare.dataaccess.IDataAccess;
+import com.tachys.moneyshare.dataaccess.db.DBAccess;
+import com.tachys.moneyshare.model.Member;
 import com.tachys.moneyshare.util.CommonUtils;
 
 public class MoneyShareWelcome extends ActionBarActivity {
@@ -52,12 +55,21 @@ public class MoneyShareWelcome extends ActionBarActivity {
                     return;
                 }
 
+                IDataAccess ida = DBAccess.getInstance(getBaseContext());
+
+                Member m = new Member(my_name, my_mail, my_num);
+
                 CommonUtils.setPref(getBaseContext(), "my_name", my_name);
                 CommonUtils.setPref(getBaseContext(), "my_mail_id", my_mail);
                 CommonUtils.setPref(getBaseContext(), "my_phone", my_num);
+                CommonUtils.my_member_id = (ida.addMember(m)).Id;
+                CommonUtils.setPref(getBaseContext(), "my_member_id", String.valueOf(CommonUtils.my_member_id));
+                CommonUtils.my_member_name = my_name;
+                CommonUtils.my_member_mail = my_mail;
+                CommonUtils.my_member_phone = my_num;
 
                 startActivity(new Intent().setClassName(getBaseContext(), "com.tachys.moneyshare.activity.ExpenseActivity"));
-
+                finish();
 
             }
         });

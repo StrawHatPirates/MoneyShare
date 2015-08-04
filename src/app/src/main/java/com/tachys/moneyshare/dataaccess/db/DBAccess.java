@@ -1,9 +1,12 @@
 package com.tachys.moneyshare.dataaccess.db;
 
+import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
+import android.os.Build;
+import android.provider.ContactsContract;
 import android.util.Log;
 
 import com.tachys.moneyshare.dataaccess.IDataAccess;
@@ -24,13 +27,36 @@ import java.util.HashMap;
 import java.util.Locale;
 
 public class DBAccess implements IDataAccess {
+    private static final String TAG = "DBAccess";
+    private static DBAccess instance = null;
     private final String LOG_TAG = "DBAccess";
     private MoneyShareDbHelper dbHelper;
+
+    private Context mContext;
 
     private String dateFormat = "yyyy-MM-dd HH:mm:ss";
     private final SimpleDateFormat isoSdf = new SimpleDateFormat(dateFormat, Locale.ENGLISH);
 
+    private static final String[] PROJECTION =
+            {
+                    ContactsContract.Contacts._ID,
+                    ContactsContract.Contacts.LOOKUP_KEY,
+                    Build.VERSION.SDK_INT
+                            >= Build.VERSION_CODES.HONEYCOMB ?
+                            ContactsContract.Contacts.DISPLAY_NAME_PRIMARY :
+                            ContactsContract.Contacts.DISPLAY_NAME
+
+            };
+
+    public static IDataAccess getInstance(Context context) {
+        if (instance == null) {
+            instance = new DBAccess(context);
+        }
+        return instance;
+    }
+
     public DBAccess(Context context) {
+        mContext = context;
         dbHelper = new MoneyShareDbHelper(context);
     }
 
@@ -38,8 +64,13 @@ public class DBAccess implements IDataAccess {
     public Member addMember(Member member) {
 
         //Writable DB Helper
+        Member result = findMember(member.Email, member.Phone, member.Email != null ? true : false);
+        if (result != null) {
+            return result;
+        }
 
         try (SQLiteDatabase db = dbHelper.getWritableDatabase()) {
+
 
             // Create a new map of values, where column names are the keys
             ContentValues values = new ContentValues();
@@ -61,39 +92,55 @@ public class DBAccess implements IDataAccess {
     @Override
     public ArrayList<Member> addMember(ArrayList<Member> members) {
         //Writable DB Helper
-        SQLiteDatabase db = dbHelper.getWritableDatabase();
-
+        SQLiteDatabase db = null;
+        Member result = null;
         try {
 
             db.beginTransaction();
 
-            for (Member member : members) {// Create a new map of values, where column names are the keys
-                ContentValues values = new ContentValues();
-                values.put(MemberContract.MemberEntry.COLUMN_NAME_Name, member.Name);
-                values.put(MemberContract.MemberEntry.COLUMN_NAME_Email, member.Email);
-                values.put(MemberContract.MemberEntry.COLUMN_NAME_Phone, member.Phone);
+            for (Member member : members) {
+                // Create a new map of values, where column names are the keys
+                result = findMember(member.Email, member.Phone, member.Email != null ? true : false);
+                if (result != null) {
+                    member.Id = result.Id;
+                    continue;
+                } else {
+                    db = dbHelper.getWritableDatabase();
+                    ContentValues values = new ContentValues();
+                    values.put(MemberContract.MemberEntry.COLUMN_NAME_Name, member.Name);
+                    values.put(MemberContract.MemberEntry.COLUMN_NAME_Email, member.Email);
+                    values.put(MemberContract.MemberEntry.COLUMN_NAME_Phone, member.Phone);
 
-                // Insert the new row, returning the primary key value of the new row
-                long newRowId;
-                newRowId = db.insert(MemberContract.MemberEntry.TABLE_NAME, null, values);
+                    // Insert the new row, returning the primary key value of the new row
+                    long newRowId;
+                    newRowId = db.insert(MemberContract.MemberEntry.TABLE_NAME, null, values);
 
-                Log.i(LOG_TAG, "Added Member:" + member.Email + " Id:" + newRowId);
-                member.Id = newRowId;
+                    Log.i(LOG_TAG, "Added Member:" + member.Email + " Id:" + newRowId);
+                    member.Id = newRowId;
+                }
             }
+
 
             db.setTransactionSuccessful();
             return members;
-        } catch (Exception ex) {
+        } catch (
+                Exception ex
+                )
+
+        {
             db.endTransaction();
             Log.e(LOG_TAG, ex.toString());
             throw ex;
-        } finally {
+        } finally
+
+        {
             db.close();
         }
+
     }
 
     @Override
-    public Member findMember(String email) {
+    public Member findMember(String email, String phone, boolean isEmail) {
         try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
             String[] projection = {
                     MemberContract.MemberEntry._ID,
@@ -103,9 +150,15 @@ public class DBAccess implements IDataAccess {
             };
 
             String sortOrder = MemberContract.MemberEntry.COLUMN_NAME_Name + " DESC";
-
-            String selection = MemberContract.MemberEntry.COLUMN_NAME_Email + " =?";
-            String[] selectionArgs = {String.valueOf(email)};
+            String selection = null;
+            String[] selectionArgs = null;
+            if (isEmail) {
+                selection = MemberContract.MemberEntry.COLUMN_NAME_Email + " =?";
+                selectionArgs = new String[]{String.valueOf(email)};
+            } else {
+                selection = MemberContract.MemberEntry.COLUMN_NAME_Phone + " =?";
+                selectionArgs = new String[]{String.valueOf(phone)};
+            }
 
             Cursor c = db.query(MemberContract.MemberEntry.TABLE_NAME,
                     projection,
@@ -135,7 +188,7 @@ public class DBAccess implements IDataAccess {
     }
 
     @Override
-    public ArrayList<Member> getMember() {
+    public ArrayList<Member> getMembers() {
 
         // Readable DB Helper
 
@@ -181,6 +234,87 @@ public class DBAccess implements IDataAccess {
     }
 
     @Override
+    public ArrayList<Member> getAllContacts() {
+
+        ArrayList<Member> list = new ArrayList<>();
+        Cursor pCur = null;
+        Cursor cur = null;
+        Cursor emails = null;
+        String name;
+        String email = null;
+        int emailType;
+        String phoneNo = null;
+        Member mem;
+        int cnt = 0;
+        try {
+            ContentResolver cr = mContext.getContentResolver();
+            cur = cr.query(ContactsContract.Contacts.CONTENT_URI,
+                    null, null, null, null);
+            if (cur.getCount() > 0) {
+                while (cur.moveToNext()) {
+                    String id = cur.getString(cur.getColumnIndex(ContactsContract.Contacts._ID));
+                    name = cur.getString(cur.getColumnIndex(ContactsContract.Contacts.DISPLAY_NAME));
+                    if (Integer.parseInt(cur.getString(
+                            cur.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+                        pCur = cr.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                                new String[]{id}, null);
+                        while (pCur.moveToNext()) {
+                            phoneNo = pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        }
+
+                    }
+                    emails = cr.query(ContactsContract.CommonDataKinds.Email.CONTENT_URI, null,
+                            ContactsContract.CommonDataKinds.Email.CONTACT_ID + " = " + id, null, null);
+                    if (emails != null) {
+                        while (emails.moveToNext()) {
+                            email = emails.getString(emails
+                                    .getColumnIndex(ContactsContract.CommonDataKinds.Email.DATA));
+
+                            emailType = emails.getInt(emails
+                                    .getColumnIndex(ContactsContract.CommonDataKinds.Phone.TYPE));
+
+                        }
+                    }
+                    emails.close();
+                    if (Integer.parseInt(cur.getString(
+                            cur.getColumnIndex(ContactsContract.Contacts.HAS_PHONE_NUMBER))) > 0) {
+                        pCur = cr.query(
+                                ContactsContract.CommonDataKinds.Phone.CONTENT_URI,
+                                null,
+                                ContactsContract.CommonDataKinds.Phone.CONTACT_ID + " = ?",
+                                new String[]{id}, null);
+                        while (pCur.moveToNext()) {
+                            phoneNo = pCur.getString(pCur.getColumnIndex(ContactsContract.CommonDataKinds.Phone.NUMBER));
+                        }
+                        pCur.close();
+                    }
+                    mem = new Member(name, email, phoneNo);
+                    list.add(mem);
+                    cnt++;
+                    if (cnt > 50)
+                        break;
+                }
+            }
+            Log.i(LOG_TAG, " returning " + list.size());
+            return list;
+
+        } finally {
+            if (pCur != null) {
+                pCur.close();
+            }
+            if (cur != null) {
+                cur.close();
+            }
+            if (emails != null) {
+                emails.close();
+            }
+        }
+    }
+
+    @Override
     public Member getMember(long memberId) {
 
         try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
@@ -215,7 +349,7 @@ public class DBAccess implements IDataAccess {
 
                 member = new Member(Id, Name, Email, Phone);
 
-
+                Log.i(TAG, "member " + member.Id + " name " + member.Name);
                 return member;
             }
 
@@ -225,6 +359,28 @@ public class DBAccess implements IDataAccess {
 
     @Override
     public Expense addExpense(Expense expense) {
+
+        for (Member memberPaid : expense.PaidBy.keySet()) {
+            Member tmp;
+            if (memberPaid != null) {
+                tmp = findMember(null, memberPaid.Phone, false);
+                if (tmp == null) {
+                    Log.e(LOG_TAG, "Insertion paid by mem " + memberPaid.Name);
+                    memberPaid.Id = addMember(memberPaid).Id;
+                }
+            }
+        }
+
+        for (Member member : expense.PaidTo.keySet()) {
+            Member tmp;
+            if (member != null) {
+                tmp = findMember(null, member.Phone, false);
+                if (tmp == null) {
+                    Log.e(LOG_TAG, "Insertion paid to mem " + member.Name);
+                    member.Id = addMember(member).Id;
+                }
+            }
+        }
 
         SQLiteDatabase db = dbHelper.getWritableDatabase();
 
@@ -423,6 +579,130 @@ public class DBAccess implements IDataAccess {
 
         Log.i(LOG_TAG, "Returned expenses" + expenses.toString());
         return expenses;
+    }
+
+    @Override
+    public Expense getExpense(long Id) {
+
+        Expense expense = null;
+
+        // Readable DB Helper
+        try (SQLiteDatabase db = dbHelper.getReadableDatabase()) {
+            String[] projection = {
+                    ExpenseContract.ExpenseEntry._ID,
+                    ExpenseContract.ExpenseEntry.COLUMN_NAME_Name,
+                    ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate,
+            };
+
+            String qselection = ExpenseContract.ExpenseEntry._ID + "=?";
+            String qselection_arguments[] = {String.valueOf(Id)};
+
+
+            String sortOrder = ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate + " DESC";
+
+
+            Cursor c = db.query(ExpenseContract.ExpenseEntry.TABLE_NAME,
+                    projection,
+                    qselection,
+                    qselection_arguments,
+                    null,
+                    null,
+                    sortOrder);
+            Log.i(LOG_TAG, "Cursor size" + c.getCount());
+            if (c.moveToFirst()) {
+
+
+                //long Id = c.getLong(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry._ID));
+                String Name = c.getString(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry.COLUMN_NAME_Name));
+                String formattedDate = c.getString(c.getColumnIndexOrThrow(ExpenseContract.ExpenseEntry.COLUMN_NAME_LastUpdate));
+
+                Log.i(LOG_TAG, String.format("Fetched Expense with Id:%d, Name:%s", Id, Name));
+                expense = new Expense();
+                expense.Id = Id;
+                expense.Name = Name;
+                expense.LastUpdated = isoSdf.parse(formattedDate);
+
+                String[] exprojection = {
+                        ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId,
+                        ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER,
+                        ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE,
+                        ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT,
+                };
+
+                String orderBy = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER + " DESC";
+
+                String selection = ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId + " =?";
+                String[] selectionArgs = {String.valueOf(Id)};
+
+                HashMap<Long, Double> PaidBy = new HashMap<>();
+                HashMap<Long, Double> PaidTo = new HashMap<>();
+
+                try (SQLiteDatabase exDB = dbHelper.getReadableDatabase()) {
+                    Cursor cex = exDB.query(ExpenseMemberContract.ExpenseMemberEntry.TABLE_NAME,
+                            exprojection,
+                            selection,
+                            selectionArgs,
+                            null,
+                            null,
+                            orderBy);
+
+                    if (cex.moveToFirst()) {
+
+                        do {
+                            long expenseId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_ExpenseId));
+                            long payerId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYER));
+                            long payeeId = cex.getLong(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_PAYEE));
+                            Double amount = cex.getDouble(cex.getColumnIndexOrThrow(ExpenseMemberContract.ExpenseMemberEntry.COLUMN_NAME_AMOUNT));
+
+                            if (PaidBy.containsKey(payerId)) {
+                                Double existingAmount = PaidBy.get(payerId);
+                                PaidBy.remove(payerId);
+                                Double newAmount = existingAmount + amount;
+                                PaidBy.put(payerId, newAmount);
+                            } else {
+                                PaidBy.put(payerId, amount);
+                            }
+
+                            if (PaidTo.containsKey(payeeId)) {
+                                Double existingAmount = PaidTo.get(payeeId);
+                                PaidTo.remove(payeeId);
+                                Double newAmount = existingAmount + amount;
+                                PaidTo.put(payeeId, newAmount);
+                            } else {
+                                PaidTo.put(payeeId, amount);
+                            }
+
+                            Log.v(LOG_TAG, String.format("Expense Member Payee:%d, Payer:%d, Amount:%f", payeeId, payerId, amount));
+                            if (expenseId != Id) {
+                                Log.e(LOG_TAG, "Got a different expense id than the one expected");
+                                //TODO: DB Corrupt have to check
+                                return null;
+                            }
+                        } while (cex.moveToNext());
+
+                        for (long memberId : PaidBy.keySet()) {
+                            Member member = getMember(memberId);
+                            expense.PaidBy.put(member, PaidBy.get(memberId));
+                        }
+
+                        for (long memberId : PaidTo.keySet()) {
+                            Member member = getMember(memberId);
+                            expense.PaidTo.put(member, PaidTo.get(memberId));
+                        }
+                    }
+                }
+
+                Log.i(LOG_TAG, " Expense" + expense);
+
+            }
+
+        } catch (ParseException pex) {
+            Log.e(LOG_TAG, "Exception while parsing : " + pex.toString());
+            //throw new Exception("Not Able to parse the date format");
+        }
+
+        Log.i(LOG_TAG, "Returned expense" + expense.toString());
+        return expense;
     }
 
     @Override

@@ -16,4 +16,12 @@
     <string name="enter_name">Enter Name</string>
     <string name="phone_number">Enter phone number</string>
     <string name="enter_mail">Enter mail ID</string>
+    <string name="Payees">Payees</string>
+    <string name="payers">Payers</string>
+    <string name="title_activity_contact_list_adapter">ContactListAdapter</string>
+    <string name="refresh_contacts">Refresh Contacts</string>
+    <string name="no_expenses">No Expenses present currently!</string>
+    <string name="more_button">More</string>
+    <string name="equal">Equal</string>
+    <string name="unequal">Unequal</string>
 </resources>

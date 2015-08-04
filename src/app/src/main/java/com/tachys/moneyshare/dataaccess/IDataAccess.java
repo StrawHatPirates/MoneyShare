@@ -12,15 +12,19 @@ public interface IDataAccess {
 
     ArrayList<Member> addMember(ArrayList<Member> members);
 
-    Member findMember(String email);
+    Member findMember(String email, String phone, boolean isEmail);
 
-    ArrayList<Member> getMember();
+    ArrayList<Member> getMembers();
+
+    ArrayList<Member> getAllContacts();
 
     Member getMember(long memberId);
 
     Expense addExpense(Expense expense);
 
     ArrayList<Expense> getExpenses();
+
+    Expense getExpense(long expenseId);
 
     Settlement addSettlement(Settlement settlement);
 
