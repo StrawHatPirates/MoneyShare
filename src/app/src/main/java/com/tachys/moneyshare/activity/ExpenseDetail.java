@@ -99,9 +99,9 @@ public class ExpenseDetail extends ActionBarActivity {
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
             return true;
-        } else if (id == R.id.home) {
+        }/* else if (id == R.id.home) {
             super.onBackPressed();
-        }
+        }*/
 
         return super.onOptionsItemSelected(item);
     }

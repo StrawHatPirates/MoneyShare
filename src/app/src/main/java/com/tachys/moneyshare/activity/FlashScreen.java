@@ -23,7 +23,7 @@ public class FlashScreen extends ActionBarActivity {
             i.setClassName(getBaseContext(), "com.tachys.moneyshare.activity.MoneyShareWelcome");
             startActivity(i);
         } else {
-            i.setClassName(getBaseContext(), "com.tachys.moneyshare.activity.ExpenseActivity");
+            i.setClassName(getBaseContext(), "com.tachys.moneyshare.activity.RVExpenseActivity");
             startActivity(i);
         }
         finish();

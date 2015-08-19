@@ -126,9 +126,9 @@ public class CreateExpense extends ActionBarActivity {
             setResult(CommonUtils.RESULT_CREATED_EXPENSE, intent);
             finish();
             return true;
-        } else if (id == R.id.home) {
+        }/* else if (id == R.id.home) {
             super.onBackPressed();
-        }
+        }*/
 
         return id == R.id.action_settings || super.onOptionsItemSelected(item);
 
@@ -162,6 +162,7 @@ public class CreateExpense extends ActionBarActivity {
 
 
     public void showMemberDialog(final DialogResultListner drl, final View v, final ImageButton remove_bt, final ImageButton add_bt) {
+        v.setEnabled(true);
         AlertDialog.Builder builder = new AlertDialog.Builder(CreateExpense.this);
 
         builder.setMessage("List of members");
@@ -219,7 +220,7 @@ public class CreateExpense extends ActionBarActivity {
                     drl.onResult(m);
 
                 }
-                v.setEnabled(true);
+
                 dialog.dismiss();
 
             }
@@ -228,7 +229,6 @@ public class CreateExpense extends ActionBarActivity {
         builder.setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
-                v.setEnabled(true);
                 dialog.dismiss();
             }
         });
@@ -290,7 +290,7 @@ public class CreateExpense extends ActionBarActivity {
             public void onClick(View v) {
                 String name = tv.getText().toString().trim();
                 String str_price = amt.getText().toString().trim();
-                if (name != null && name.length() > 0 && (isEqualSplit || (str_price != null && str_price.length() > 0))) {
+                if (name.length() > 0 && (isEqualSplit || str_price.length() > 0)) {
                     bt_remove.setVisibility(View.VISIBLE);
                     bt_add.setVisibility(View.GONE);
                     tv.setEnabled(false);
@@ -369,7 +369,7 @@ public class CreateExpense extends ActionBarActivity {
             public void onClick(View v) {
                 String str_price = amt.getText().toString().trim();
                 String name = tv.getText().toString().trim();
-                if (name != null && name.length() > 0 && str_price != null && str_price.length() > 0) {
+                if (name.length() > 0 && str_price.length() > 0) {
                     double price = Double.valueOf(str_price);
                     amt.setEnabled(false);
                     tv.setEnabled(false);
@@ -391,7 +391,7 @@ public class CreateExpense extends ActionBarActivity {
 
 
     public interface DialogResultListner {
-        public void onResult(Member m);
+        void onResult(Member m);
     }
 
 }

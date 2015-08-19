@@ -68,7 +68,7 @@ public class MoneyShareWelcome extends ActionBarActivity {
                 CommonUtils.my_member_mail = my_mail;
                 CommonUtils.my_member_phone = my_num;
 
-                startActivity(new Intent().setClassName(getBaseContext(), "com.tachys.moneyshare.activity.ExpenseActivity"));
+                startActivity(new Intent().setClassName(getBaseContext(), "com.tachys.moneyshare.activity.RVExpenseActivity"));
                 finish();
 
             }

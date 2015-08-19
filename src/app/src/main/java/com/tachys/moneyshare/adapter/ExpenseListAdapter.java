@@ -57,7 +57,7 @@ public class ExpenseListAdapter extends ArrayAdapter<Expense> {
         double amountForPerson = exp.getAmountForPerson(CommonUtils.my_member_id);
         holder.amt.setText(String.valueOf(amountForPerson));
         if (amountForPerson >= 0) {
-            holder.rl.setBackgroundResource(R.color.green_background);
+            holder.rl.setBackgroundResource(R.color.red_background);
         } else {
             holder.rl.setBackgroundResource(R.color.red_background);
         }
